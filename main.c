@@ -10,24 +10,16 @@
 #include <stdlib.h>
 #include <stdio.h>
 #include <string.h>
-#include <limits.h>
 
 /*Built in shell commands*/
-int lsh_cd(char **args);
+int fun_cd(char **args);
+int fun_help(char **args);
+int fun_exit(char **args);
+int fun_ls(char **args);
+int fun_echo(char **args);
+int fun_rm(char **args);
 
-int lsh_help(char **args);
-
-int lsh_exit(char **args);
-
-int lsh_ls(char **args);
-
-int lsh_echo(char **args);
-
-int lsh_rm(char **args);
-
-/*
-    builtin commands, followed by their functions
- */
+//builtin commands, followed by their functions
 char *builtin_str[] = {
         "cd",
         "help",
@@ -38,56 +30,47 @@ char *builtin_str[] = {
 };
 
 int (*builtin_func[])(char **) = {
-        &lsh_cd,
-        &lsh_help,
-        &lsh_exit,
-        &lsh_ls,
-        &lsh_echo,
-        &lsh_rm
+        &fun_cd,
+        &fun_help,
+        &fun_exit,
+        &fun_ls,
+        &fun_echo,
+        &fun_rm
 };
 
-int lsh_num_builtins() {
+int fun_num_builtins() {
     return sizeof(builtin_str) / sizeof(char *);
 }
 
-/*
-  Builtin function implementations.
-*/
-
-/**
-   @brief Bultin command: change directory.
-   @param args List of args.  args[0] is "cd".  args[1] is the directory.
-   @return Always returns 1, to continue executing.
- */
-int lsh_cd(char **args) {
+int fun_cd(char **args) {
     if (args[1] == NULL) {
         fprintf(stderr, "shell: expected argument for \"cd\"\n");
     } else {
         if (chdir(args[1]) != 0) {
-            perror("lsh");
+            perror("error");
         }
     }
     return 1;
 }
 
-int lsh_ls(char **args) {
+int fun_ls(char **args) {
     if (args[1] == NULL) {
-        system("ls");
+        system("ls\n");
     }
     return 1;
 }
 
-int lsh_echo(char **args) {
-    printf("%s", args[1]);
+int fun_echo(char **args) {
+    printf("%s\n", args[1]);
     return 1;
 }
 
-int lsh_rm(char **args) {
+int fun_rm(char **args) {
     int del = remove(args[1]);
-    if(!del )
-        printf("The file was deleted successfully");
+    if (!del)
+        printf("The file has been successfully deleted.\n");
     else
-        printf("There was an error deleting the file.");
+        printf("There was an error deleting the file.\n");
     return 1;
 }
 
@@ -96,12 +79,12 @@ int lsh_rm(char **args) {
    @param args List of args.  Not examined.
    @return Always returns 1, to continue executing.
  */
-int lsh_help(char **args) {
+int fun_help(char **args) {
     int i;
     printf("Type in the commands, and hit enter.\n");
     printf("The following are built in:\n");
 
-    for (i = 0; i < lsh_num_builtins(); i++) {
+    for (i = 0; i < fun_num_builtins(); i++) {
         printf("  %s\n", builtin_str[i]);
     }
 
@@ -114,7 +97,7 @@ int lsh_help(char **args) {
    @param args List of args.  Not examined.
    @return Always returns 0, to terminate execution.
  */
-int lsh_exit(char **args) {
+int fun_exit(char **args) {
     return 0;
 }
 
@@ -123,7 +106,7 @@ int lsh_exit(char **args) {
   @param args Null terminated list of arguments (including program).
   @return Always returns 1, to continue execution.
  */
-int lsh_launch(char **args) {
+int fun_launch(char **args) {
     pid_t pid, wpid;
     int status;
 
@@ -131,12 +114,12 @@ int lsh_launch(char **args) {
     if (pid == 0) {
         // Child process
         if (execvp(args[0], args) == -1) {
-            perror("lsh");
+            perror("fun");
         }
         exit(EXIT_FAILURE);
     } else if (pid < 0) {
         // Error forking
-        perror("lsh");
+        perror("fun");
     } else {
         // Parent process
         do {
@@ -152,7 +135,7 @@ int lsh_launch(char **args) {
    @param args Null terminated list of arguments.
    @return 1 if the shell should continue running, 0 if it should terminate
  */
-int lsh_execute(char **args) {
+int fun_execute(char **args) {
     int i;
 
     if (args[0] == NULL) {
@@ -160,29 +143,29 @@ int lsh_execute(char **args) {
         return 1;
     }
 
-    for (i = 0; i < lsh_num_builtins(); i++) {
+    for (i = 0; i < fun_num_builtins(); i++) {
         if (strcmp(args[0], builtin_str[i]) == 0) {
             return (*builtin_func[i])(args);
         }
     }
 
-    return lsh_launch(args);
+    return fun_launch(args);
 }
 
-#define LSH_RL_BUFSIZE 1024
+#define fun_RL_BUFSIZE 1024
 
 /**
    @brief Read a line of input from stdin.
    @return The line from stdin.
  */
-char *lsh_read_line(void) {
-    int bufsize = LSH_RL_BUFSIZE;
+char *fun_read_line(void) {
+    int bufsize = fun_RL_BUFSIZE;
     int position = 0;
     char *buffer = malloc(sizeof(char) * bufsize);
     int c;
 
     if (!buffer) {
-        fprintf(stderr, "lsh: allocation error\n");
+        fprintf(stderr, "fun: allocation error\n");
         exit(EXIT_FAILURE);
     }
 
@@ -201,49 +184,49 @@ char *lsh_read_line(void) {
 
         // If we have exceeded the buffer, reallocate.
         if (position >= bufsize) {
-            bufsize += LSH_RL_BUFSIZE;
+            bufsize += fun_RL_BUFSIZE;
             buffer = realloc(buffer, bufsize);
             if (!buffer) {
-                fprintf(stderr, "lsh: allocation error\n");
+                fprintf(stderr, "fun: allocation error\n");
                 exit(EXIT_FAILURE);
             }
         }
     }
 }
 
-#define LSH_TOK_BUFSIZE 64
-#define LSH_TOK_DELIM " \t\r\n\a"
+#define fun_TOK_BUFSIZE 64
+#define fun_TOK_DELIM " \t\r\n\a"
 
 /**
    @brief Split a line into tokens (very naively).
    @param line The line.
    @return Null-terminated array of tokens.
  */
-char **lsh_split_line(char *line) {
-    int bufsize = LSH_TOK_BUFSIZE, position = 0;
+char **fun_split_line(char *line) {
+    int bufsize = fun_TOK_BUFSIZE, position = 0;
     char **tokens = malloc(bufsize * sizeof(char *));
     char *token;
 
     if (!tokens) {
-        fprintf(stderr, "lsh: allocation error\n");
+        fprintf(stderr, "fun: allocation error\n");
         exit(EXIT_FAILURE);
     }
 
-    token = strtok(line, LSH_TOK_DELIM);
+    token = strtok(line, fun_TOK_DELIM);
     while (token != NULL) {
         tokens[position] = token;
         position++;
 
         if (position >= bufsize) {
-            bufsize += LSH_TOK_BUFSIZE;
+            bufsize += fun_TOK_BUFSIZE;
             tokens = realloc(tokens, bufsize * sizeof(char *));
             if (!tokens) {
-                fprintf(stderr, "lsh: allocation error\n");
+                fprintf(stderr, "fun: allocation error\n");
                 exit(EXIT_FAILURE);
             }
         }
 
-        token = strtok(NULL, LSH_TOK_DELIM);
+        token = strtok(NULL, fun_TOK_DELIM);
     }
     tokens[position] = NULL;
     return tokens;
@@ -252,16 +235,16 @@ char **lsh_split_line(char *line) {
 /**
    @brief Loop getting input and executing it.
  */
-void lsh_loop(void) {
+void fun_loop(void) {
     char *line;
     char **args;
     int status;
 
     do {
-        printf("Shellyyyy>");
-        line = lsh_read_line();
-        args = lsh_split_line(line);
-        status = lsh_execute(args);
+        printf("Shell:)>");
+        line = fun_read_line();
+        args = fun_split_line(line);
+        status = fun_execute(args);
 
         free(line);
         free(args);
@@ -269,7 +252,7 @@ void lsh_loop(void) {
 }
 
 int main(int argc, char **argv) {
-    lsh_loop();
+    fun_loop();
 
     return EXIT_SUCCESS;
 }
