@@ -23,22 +23,27 @@ int lsh_ls(char **args);
 
 int lsh_echo(char **args);
 
+int lsh_rm(char **args);
+
 /*
     builtin commands, followed by their functions
  */
 char *builtin_str[] = {
         "cd",
         "help",
-        "exit"
-        "ls"
-        "echo"
+        "exit",
+        "ls",
+        "echo",
+        "rm"
 };
 
 int (*builtin_func[])(char **) = {
         &lsh_cd,
         &lsh_help,
         &lsh_exit,
-        &lsh_ls
+        &lsh_ls,
+        &lsh_echo,
+        &lsh_rm
 };
 
 int lsh_num_builtins() {
@@ -74,6 +79,16 @@ int lsh_ls(char **args) {
 
 int lsh_echo(char **args) {
     printf("%s", args[1]);
+    return 1;
+}
+
+int lsh_rm(char **args) {
+    int del = remove(args[1]);
+    if(!del )
+        printf("The file was deleted successfully");
+    else
+        printf("There was an error deleting the file.");
+    return 1;
 }
 
 /**
