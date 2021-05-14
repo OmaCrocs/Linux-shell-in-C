@@ -10,6 +10,8 @@
 #include <stdlib.h>
 #include <stdio.h>
 #include <string.h>
+#include <sys/stat.h>
+#include <sys/errno.h>
 
 /*Built in shell commands*/
 int fun_cd(char **args);
@@ -26,7 +28,9 @@ char *builtin_str[] = {
         "exit",
         "ls",
         "echo",
-        "rm"
+        "rm",
+        "mkdir",
+        "rmdir"
 };
 
 int (*builtin_func[])(char **) = {
@@ -73,7 +77,6 @@ int fun_rm(char **args) {
         printf("There was an error deleting the file.\n");
     return 1;
 }
-
 /**
    @brief Builtin command: print help.
    @param args List of args.  Not examined.
